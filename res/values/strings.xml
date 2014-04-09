@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TransitionGate</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="entry_title">Transition Wechselwelt Türöffner</string>
+    <string name="desc_opendoor">Trigger OpenDoor Event</string>
+
+</resources>

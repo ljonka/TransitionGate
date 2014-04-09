@@ -1,0 +1,59 @@
+#!/bin/bash
+# Wechselwelt routing + firewall + iptables setup
+#
+#   wlan0: kabel deutschland
+#   eth0: wechselwelt lan
+
+# alles auf null
+iptables -F
+iptables -X
+iptables -Z
+iptables -t nat -F
+
+# default -> drop
+iptables -P INPUT   DROP
+iptables -P OUTPUT  DROP
+iptables -P FORWARD DROP
+
+# kernel konfiguration
+echo -n '1' > /proc/sys/net/ipv4/ip_forward
+#echo -n '0' > /proc/sys/net/ipv4/conf/all/accept_source_route
+#echo -n '0' > /proc/sys/net/ipv4/conf/all/accept_redirects
+echo -n '1' > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+echo -n '1' > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses
+
+# localhost aktivieren
+iptables -A INPUT  -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# bestehende verbindungen grundsaetzlich erlauben
+iptables -A INPUT   -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# fehlerhafte pakete droppen
+iptables -A INPUT   -m conntrack --ctstate INVALID -j DROP
+iptables -A OUTPUT  -m conntrack --ctstate INVALID -j DROP
+iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
+
+## INPUT
+
+# alle anfragen aus dem LAN auf dem raspberry zulassen
+iptables -A INPUT -i eth0 -s 192.168.0.0/16 -m conntrack --ctstate NEW -j ACCEPT
+
+## OUTPUT
+
+# jeglichen ausgehenden traffic gen kabel deutschland erlauben
+iptables -A OUTPUT -o wlan0 -d 0.0.0.0/0 -j ACCEPT 
+
+# jeglichen ausgehenden traffic zum LAN erlauben
+iptables -A OUTPUT -o eth0 -d 192.168.0.0/16 -j ACCEPT
+
+
+## FORWARD
+
+# DHCP -> masquerading
+iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+iptables        -A FORWARD     -o wlan0 -i eth0 -s 192.168.0.0/16 \
+                               -m conntrack --ctstate NEW -j ACCEPT
+

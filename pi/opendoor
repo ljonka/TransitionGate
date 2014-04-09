@@ -1,0 +1,20 @@
+#!/usr/bin/python2
+
+#turn relais on for 10 seconds to open a door...
+import RPi.GPIO as GPIO
+import time
+
+#pin 17 as output
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17,GPIO.OUT)
+
+#pin 17 logical on
+GPIO.output(17, True)
+
+#wait 10 sec
+time.sleep(3)
+
+#pin 17 off
+GPIO.output(17, False)
+
+#done
